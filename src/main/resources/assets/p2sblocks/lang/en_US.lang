@@ -1,0 +1,3 @@
+tile.p2sblocks.name=Pay2Spawn Block
+
+p2sblocks.msg.noP2s=You don't have Pay2Spawn. Nothing will spawn if you break this.

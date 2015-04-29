@@ -1,0 +1,145 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+    }
+}
+
+import groovy.json.*
+
+configurations {
+    compile
+    deployJars
+}
+
+apply plugin: "forge"
+apply plugin: "maven"
+
+group = "net.doubledoordev.p2sblocks"
+version = "2.7.0"
+
+targetCompatibility = 1.7
+sourceCompatibility = 1.7
+
+archivesBaseName = 'Pay2SpawnBlocks'
+minecraft {
+    version = "1.7.10-10.13.2.1286"
+    runDir = "jars"
+}
+
+repositories {
+    maven {
+         name "DDD repo"
+         url "http://doubledoordev.net/maven/"
+     }
+}
+
+dependencies {
+    compile "net.doubledoordev.d3core:D3Core:" + project.minecraft.version + "-+:dev"
+}
+
+if (System.getenv().BUILD_NUMBER != null) version += "." + System.getenv().BUILD_NUMBER
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        include '**/*.info'
+        expand 'version':project.version, 'mcversion':project.minecraft.version
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude '**/*.info'
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from "LICENSE.txt"
+    from sourceSets.main.allSource
+    classifier = 'src'
+    appendix = project.minecraft.version
+}
+
+task deobfJar(type: Jar) {
+    from "LICENSE.txt"
+    from sourceSets.main.output
+    from (sourceSets.main.allSource.srcDirs) {
+        include '**/*.java'
+    }
+	classifier = 'dev'
+    appendix = project.minecraft.version
+}
+
+jar {
+    from "LICENSE.txt"
+    appendix = project.minecraft.version
+}
+
+artifacts {
+	archives jar
+    archives sourcesJar
+    archives deobfJar
+}
+
+uploadArchives {
+    if (project.hasProperty("dddUser") && project.hasProperty("dddUrl") && project.hasProperty("dddPass")) {
+        repositories {
+            mavenDeployer {
+                repository(url: dddUrl) {
+                    authentication(userName: dddUser, password: dddPass)
+                }
+                pom {
+                    groupId = project.group
+                    version = project.minecraft.version + "-" + project.version
+                    artifactId = project.archivesBaseName
+                    project {
+                        name project.archivesBaseName
+                        packaging 'jar'
+                        description 'Pay2SpawnBlocks'
+                        url 'https://github.com/DoubleDoorDevelopment/Pay2SpawnBlocks'
+
+                        scm {
+                            url 'https://github.com/DoubleDoorDevelopment/Pay2SpawnBlocks'
+                            connection 'scm:git:git://github.com/DoubleDoorDevelopment/Pay2SpawnBlocks.git'
+                            developerConnection 'scm:git:git@github.com:DoubleDoorDevelopment/Pay2SpawnBlocks.git'
+                        }
+
+                        issueManagement {
+                            system 'github'
+                            url 'https://github.com/DoubleDoorDevelopment/Pay2SpawnBlocks/issues'
+                        }
+
+                        licenses  {
+                            license  {
+                                name 'MIT License'
+                                url 'https://raw.github.com/DoubleDoorDevelopment/Pay2SpawnBlocks/master/LICENCE'
+                                distribution 'repo'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'Dries007'
+                                name 'Dries007'
+                                roles { role 'developer' }
+                            }
+                            developer {
+                                id 'Claycorp'
+                                name 'Claycorp'
+                                roles { role 'architect' }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
