@@ -3,7 +3,7 @@ Pay2Spawn Blocks
 
 Pay2Spawn trigger blocks!
 
-* The texture is a placeholder, more fancy things to come. *
+** The texture is a placeholder, more fancy things to come. **
 
 ** \/ ACTUALLY READ THIS \/ **
 
