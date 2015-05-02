@@ -30,12 +30,14 @@
 
 package net.doubledoordev.p2sblocks.network;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.doubledoordev.p2sblocks.P2SBlocks;
 import net.doubledoordev.p2sblocks.util.P2SInterface;
+import net.minecraft.nbt.NBTTagCompound;
 
 /**
  * @author Dries007
@@ -43,6 +45,12 @@ import net.doubledoordev.p2sblocks.util.P2SInterface;
 @SuppressWarnings("unused")
 public class BlockBreakMessage implements IMessage
 {
+    NBTTagCompound tag;
+    public BlockBreakMessage(NBTTagCompound tag)
+    {
+        this.tag = tag;
+    }
+
     public BlockBreakMessage()
     {
 
@@ -51,13 +59,13 @@ public class BlockBreakMessage implements IMessage
     @Override
     public void fromBytes(ByteBuf buf)
     {
-
+        this.tag = ByteBufUtils.readTag(buf);
     }
 
     @Override
     public void toBytes(ByteBuf buf)
     {
-
+        ByteBufUtils.writeTag(buf, tag);
     }
 
     public static class Handler implements IMessageHandler<BlockBreakMessage, IMessage>
@@ -67,7 +75,7 @@ public class BlockBreakMessage implements IMessage
         {
             if (ctx.side.isClient() && P2SBlocks.instance.hasP2S)
             {
-                P2SInterface.trigger();
+                P2SInterface.trigger(message.tag);
             }
             return null;
         }

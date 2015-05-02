@@ -30,11 +30,16 @@
 
 package net.doubledoordev.p2sblocks.util;
 
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+import net.doubledoordev.p2sblocks.P2SBlocks;
 import net.doubledoordev.pay2spawn.Pay2Spawn;
+import net.doubledoordev.pay2spawn.random.RandomRegistry;
 import net.doubledoordev.pay2spawn.util.ClientTickHandler;
 import net.doubledoordev.pay2spawn.util.Donation;
 import net.doubledoordev.pay2spawn.util.Reward;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ChatComponentText;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -45,9 +50,44 @@ import java.util.UUID;
  */
 public class P2SInterface
 {
-    public static void trigger()
+    public static void trigger(NBTTagCompound tag)
     {
-        ClientTickHandler.INSTANCE.new QueEntry(getRandomReward(), new Donation(UUID.randomUUID().toString(), 0.0d, System.currentTimeMillis(), Minecraft.getMinecraft().thePlayer.getCommandSenderName()), false, null).send();
+        Donation donation = new Donation(UUID.randomUUID().toString(), 0.0d, System.currentTimeMillis(), Minecraft.getMinecraft().thePlayer.getCommandSenderName());
+
+        if (tag.hasKey("name")) donation.username = tag.getString("name");
+        if (tag.hasKey("note")) donation.note = tag.getString("note");
+
+        Reward reward = null;
+        if (tag.hasKey("amount"))
+        {
+            donation.amount = tag.getDouble("amount");
+            reward = getRewardFor(donation.amount);
+        }
+
+        if (reward == null) reward = getRandomReward();
+
+        if (reward == null)
+        {
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("You have no rewards with amount > 0."));
+            return;
+        }
+
+        ClientTickHandler.INSTANCE.new QueEntry(reward, donation, false, null).send();
+    }
+
+    public static Reward getRewardFor(double amount)
+    {
+        double highestMatch = -1;
+
+        for (Double key : Pay2Spawn.getRewardsDB().getAmounts()) if (key > 0 && key < amount && highestMatch < key) highestMatch = key;
+        ArrayList<Reward> rewards = new ArrayList<>(Pay2Spawn.getRewardsDB().getRewards());
+        Iterator<Reward> i = rewards.iterator();
+        while (i.hasNext())
+        {
+            if (i.next().getAmount() != highestMatch) i.remove();
+        }
+
+        return RandomRegistry.getRandomFromSet(rewards);
     }
 
     public static Reward getRandomReward()
@@ -77,6 +117,9 @@ public class P2SInterface
                 break;
             }
         }
+
+        if (randomIndex == -1) return null;
+
         return rewards.get(randomIndex);
     }
 }

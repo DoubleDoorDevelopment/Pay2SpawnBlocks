@@ -43,6 +43,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import net.doubledoordev.d3core.util.ID3Mod;
 import net.doubledoordev.p2sblocks.block.P2SBlock;
+import net.doubledoordev.p2sblocks.block.P2STileEntity;
 import net.doubledoordev.p2sblocks.network.BlockBreakMessage;
 import net.doubledoordev.p2sblocks.network.HandshakeMessage;
 import net.doubledoordev.p2sblocks.util.ServerHandler;
@@ -72,6 +73,10 @@ public class P2SBlocks implements ID3Mod
     @Mod.Metadata(MODID)
     private ModMetadata metadata;
 
+    public float bedrockChance;
+    public float hardnessWithP2S;
+    public float hardnessWithoutP2S;
+
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event)
     {
@@ -79,6 +84,7 @@ public class P2SBlocks implements ID3Mod
         config = new Configuration(event.getSuggestedConfigurationFile());
 
         GameRegistry.registerBlock(p2SBlock = new P2SBlock(), MODID_LOWERCASE);
+        GameRegistry.registerTileEntity(P2STileEntity.class, "p2sBlockTE");
 
         MinecraftForge.EVENT_BUS.register(ServerHandler.I);
         FMLCommonHandler.instance().bus().register(ServerHandler.I);
@@ -102,10 +108,16 @@ public class P2SBlocks implements ID3Mod
         else logger.warn("Pay2Spawn was not found, blocks you do will do nothing.");
     }
 
+
     @Override
     public void syncConfig()
     {
         config.addCustomCategoryComment(MODID_LOWERCASE, "Add a recipe with minetweaker!");
+
+        //public float getFloat(String name, String category, float defaultValue, float minValue, float maxValue, String comment)
+        bedrockChance = config.getFloat("bedrockChance", MODID_LOWERCASE, 0.01f, 0.0f, 1.0f, "The chance that a p2sblock placed turns unbreakable.");
+        hardnessWithP2S = config.getFloat("hardnessWithP2S", MODID_LOWERCASE, 1f, 0.0f, 1.0f, "The block hardness for people with p2s. 1 breaks instantly, 0 doesn't break at all.");
+        hardnessWithoutP2S = config.getFloat("hardnessWithoutP2S", MODID_LOWERCASE, 0.1f, 0.0f, 1.0f, "The block hardness for people without p2s. 1 breaks instantly, 0 doesn't break at all.");
 
         if (config.hasChanged()) config.save();
     }
